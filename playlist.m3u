@@ -1,0 +1,6 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="111" tvg-logo="https://example.com/logos/premium111.png" group-title="Sports", Premium 111
+https://vomos.phantemlis.top/premium111/index.m3u8?md5v1=TsiyHtGL7hdVB7kzeLXsGw&md5v2=-kI3yGmF5Bz3otbb-Sz5bw&expires=1781395133
+#EXTINF:-1 tvg-id="112" tvg-logo="https://example.com/logos/premium112.png" group-title="Sports", Premium 112
+https://vomos.phantemlis.top/.../index.m3u8?md5v1=...&expires=1781395133
+https://vomos.phantemlis.top/premium111/index.m3u8?md5v1=TsiyHtGL7hdVB7kzeLXsGw&md5v2=-kI3yGmF5Bz3otbb-Sz5bw&expires=1781395133
