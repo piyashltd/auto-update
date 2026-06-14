@@ -13,10 +13,9 @@ PLAYLIST_FILE = "playlist.m3u"
 BUFFER_TIME = 1800 
 
 def fetch_fresh_link(ch_id):
-    """আপনার অরিজিনাল হেডার্স ব্যবহার করে সার্ভার থেকে নতুন টোকেনযুক্ত লিংক নিয়ে আসার ফাংশন"""
+    """সার্ভার থেকে নতুন টোকেন আনার ফাংশন (ডিবাগ মোডসহ)"""
     url = f"https://donis.jimpenopisonline.online/premiumtv/daddy3.php?id={ch_id}"
     
-    # আপনার দেওয়া হুবহু অরিজিনাল হেডার্স
     headers = {
         "authority": "donis.jimpenopisonline.online",
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -31,6 +30,8 @@ def fetch_fresh_link(ch_id):
     
     try:
         response = requests.get(url, headers=headers, timeout=15, verify=False)
+        print(f"\n[*] ID {ch_id} এর জন্য সার্ভারের স্ট্যাটাস কোড: {response.status_code}")
+        
         match = re.search(r"window\.atob\(['\"]([^'\"]+)['\"]\)", response.text)
         
         if match:
@@ -38,7 +39,7 @@ def fetch_fresh_link(ch_id):
             fresh_m3u8_link = base64.b64decode(base64_string).decode('utf-8')
             return fresh_m3u8_link
         else:
-            print(f"[-] Token not found in response for ID {ch_id}")
+            print(f"[-] টোকেন পাওয়া যায়নি! সার্ভার থেকে যা এসেছে (প্রথম ৫০০ অক্ষর):\n{response.text[:500]}\n")
             return None
             
     except Exception as e:
