@@ -13,24 +13,37 @@ PLAYLIST_FILE = "playlist.m3u"
 BUFFER_TIME = 1800 
 
 def fetch_fresh_link(ch_id):
-    """সার্ভার থেকে নতুন টোকেনযুক্ত লিংক নিয়ে আসার ফাংশন"""
+    """আপনার অরিজিনাল হেডার্স ব্যবহার করে সার্ভার থেকে নতুন টোকেনযুক্ত লিংক নিয়ে আসার ফাংশন"""
     url = f"https://donis.jimpenopisonline.online/premiumtv/daddy3.php?id={ch_id}"
+    
+    # আপনার দেওয়া হুবহু অরিজিনাল হেডার্স
     headers = {
         "authority": "donis.jimpenopisonline.online",
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "accept-language": "en-BD,en;q=0.9,ar-BD;q=0.8,ar;q=0.7,en-GB;q=0.6,en-US;q=0.5",
         "referer": "https://dlhd.pk/",
         "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+        "upgrade-insecure-requests": "1",
+        "sec-fetch-dest": "iframe",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "cross-site"
     }
     
     try:
         response = requests.get(url, headers=headers, timeout=15, verify=False)
         match = re.search(r"window\.atob\(['\"]([^'\"]+)['\"]\)", response.text)
+        
         if match:
             base64_string = match.group(1)
-            return base64.b64decode(base64_string).decode('utf-8')
+            fresh_m3u8_link = base64.b64decode(base64_string).decode('utf-8')
+            return fresh_m3u8_link
+        else:
+            print(f"[-] Token not found in response for ID {ch_id}")
+            return None
+            
     except Exception as e:
         print(f"[-] Error fetching ID {ch_id}: {e}")
-    return None
+        return None
 
 def monitor_and_update_playlist():
     if not os.path.exists(PLAYLIST_FILE):
@@ -55,7 +68,7 @@ def monitor_and_update_playlist():
             extinf_line = line
             url_line = lines[i+1].strip() if i+1 < len(lines) else ""
             
-            # tvg-id থেকে চ্যানেলের আইডি বের করা এবং লিংক থেকে expires টোকেন বের করা
+            # tvg-id এবং expires টোকেন বের করা
             ch_id_match = re.search(r'tvg-id="([^"]+)"', extinf_line)
             expires_match = re.search(r'expires=(\d+)', url_line)
             
@@ -64,31 +77,31 @@ def monitor_and_update_playlist():
                 expires_time = int(expires_match.group(1))
                 time_left = expires_time - current_time
                 
-                # লজিক: যদি মেয়াদ শেষ হতে BUFFER_TIME (৩০ মিনিট) এর কম সময় বাকি থাকে
+                # যদি মেয়াদ শেষ হতে ৩০ মিনিটের কম সময় বাকি থাকে
                 if time_left < BUFFER_TIME:
                     print(f"[*] Token expiring soon for ID: {ch_id} (Time left: {time_left//60} mins). Updating...")
                     new_link = fetch_fresh_link(ch_id)
                     
                     if new_link:
-                        url_line = new_link
+                        url_line = new_link # অরিজিনাল টোকেনযুক্ত লিংকটি এখানে বসে যাবে
                         has_changes = True
                         print(f"[+] Successfully updated ID: {ch_id}")
                     else:
                         print(f"[-] Failed to update ID: {ch_id}, keeping old link.")
                 else:
-                    print(f"[+] Token is still valid for ID: {ch_id} (Time left: {time_left//60} mins). Skipping.")
+                    print(f"[+] Token valid for ID: {ch_id} (Time left: {time_left//60} mins). Skipping.")
             
-            # মেটাডেটা এবং (নতুন বা পুরোনো) লিংক ফাইলে যোগ করা
+            # মেটাডেটা এবং লিংক ফাইলে যোগ করা
             updated_lines.append(extinf_line + "\n")
             updated_lines.append(url_line + "\n")
-            i += 2 # একবারে দুই লাইন (মেটাডেটা + লিংক) প্রসেস করা হলো
+            i += 2 
             
         else:
-            if line: # ফাঁকা লাইন এড়িয়ে যাওয়া
+            if line: 
                 updated_lines.append(line + "\n")
             i += 1
 
-    # যদি কোনো লিংকে পরিবর্তন আসে, তবেই ফাইলটি নতুন করে সেভ করবে
+    # পরিবর্তন আসলে সেভ করা
     if has_changes:
         with open(PLAYLIST_FILE, "w", encoding="utf-8") as f:
             f.writelines(updated_lines)
