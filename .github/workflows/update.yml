@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests cloudscraper
 
       - name: Run Token Monitor Script
         run: python update_m3u.py
